@@ -42,6 +42,15 @@ pub mod ricks {
         nft_escrow_account.nft_fraction_token_amount = ricks_token_amount;
         nft_escrow_account.nft_deposit_time = Clock::get().unwrap().unix_timestamp;
 
+        let cpi_accounts = Transfer {
+            to: ctx.accounts.nft_deposit.to_account_info(),
+            from: ctx.accounts.nft_owner.to_account_info(),
+            authority: ctx.accounts.authority.to_account_info(),
+        };
+        let cpi_program = ctx.accounts.token_program.clone();
+        let context = CpiContext::new(cpi_program, cpi_accounts);
+        token::transfer(context, 1)?;
+
         let ricks_token_cpi_ctx = CpiContext::new(
             ctx.accounts.token_program.clone(),
             token::MintTo {
