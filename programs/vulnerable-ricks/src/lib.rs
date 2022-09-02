@@ -1,3 +1,6 @@
+// Understanding RICKS: https://www.paradigm.xyz/2021/10/ricks
+
+
 use anchor_lang::{
     prelude::*, prelude::*, solana_program::program::invoke, solana_program::system_instruction,
 };
