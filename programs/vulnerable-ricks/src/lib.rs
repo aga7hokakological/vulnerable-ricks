@@ -104,6 +104,8 @@ pub mod ricks {
         let auction_state = &mut ctx.accounts.auction_state;
         let clock = &ctx.accounts.clock;
 
+        auction_state.nft_auction_time_update = nft_escrow_account.nft_deposit_time;
+
         if !initialized {
             msg!("Cannot initialize auction");
             return Err(AuctionError::CannotInitializeAuction.into());
@@ -120,7 +122,11 @@ pub mod ricks {
             auction_state.bidding_start_time = auction_state.nft_auction_time_update + DAY as i64; // bidding start time;
             auction_state.bidding_end_time = bidding_start_time + DAY as i64;
             auction_state.nft_auction_time_update = auction_state.bidding_end_time;
-        } 
+        } else {
+            auction_state.bidding_start_time = auction_state.nft_auction_time_update + DAY as i64;
+            auction_state.bidding_end_time = bidding_start_time + DAY as i64;
+            auction_state.nft_auction_time_update = auction_state.bidding_end_time;
+        }
 
         if auction_state.bidding_end_time <= auction_state.bidding_start_time {
             msg!("End time invalid");
