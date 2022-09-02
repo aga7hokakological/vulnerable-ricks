@@ -82,6 +82,12 @@ pub mod ricks {
         let nft_owner = &mut ctx.accounts.nft_owner.key();
         let nft_escrow_account = &mut ctx.accounts.nft_escrow_account;
 
+        let index = nft_escrow_account.nft_fraction_owners.iter().position(|x| x.owner == *nft_owner).unwrap();
+
+        if nft_escrow_account.nft_fraction_owners[index].fractions_own == (nft_escrow_account.nft_fraction_token_amount * 90) / 100 {
+            return Err(WithdrawalError::NotEnoughFractions.into());
+        } 
+
         if nft_escrow_account.is_initialized {
             return Err(WithdrawalError::CannotWithdraw.into())
         }
@@ -554,6 +560,8 @@ pub enum NFTEscrowError {
 pub enum WithdrawalError {
     #[msg("Cannot withdraw because of initialization")]
     CannotWithdraw,
+    #[msg("Not Enough Fractions")]
+    NotEnoughFractions,
 }
 
 #[error_code]
