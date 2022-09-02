@@ -2,7 +2,7 @@ use anchor_lang::{
     prelude::*, prelude::*, solana_program::program::invoke, solana_program::system_instruction,
 };
 use anchor_lang::solana_program::program_option::COption;
-use anchor_spl::token::{self, SetAuthority, Token, TokenAccount, Transfer};
+use anchor_spl::token::{self, SetAuthority, Token, TokenAccount, Transfer, Mint};
 use spl_token::instruction::AuthorityType;
 
 pub const DAY: u64 = 24 * 60 * 60;
@@ -38,13 +38,14 @@ pub mod ricks {
 
         nft_escrow_account.is_initialized = true;
         nft_escrow_account.nft_owner = *nft_owner;
-        nft_escrow_account.nft_deposit = ctx.accounts.nft_deposit.key();
+        nft_escrow_account.deposited_nft = ctx.accounts.deposited_nft.key();
+        nft_escrow_account.nft_fraction_token_mint = ctx.accounts.nft_ricks_fraction_token_mint.key();
         nft_escrow_account.nft_fraction_token_amount = ricks_token_amount;
         nft_escrow_account.nft_deposit_time = Clock::get().unwrap().unix_timestamp;
 
         let cpi_accounts = Transfer {
-            to: ctx.accounts.nft_deposit.to_account_info(),
-            from: ctx.accounts.nft_owner.to_account_info(),
+            to: ctx.accounts.deposited_nft.to_account_info(),
+            from: ctx.accounts.depositor.to_account_info(),
             authority: ctx.accounts.authority.to_account_info(),
         };
         let cpi_program = ctx.accounts.token_program.clone();
@@ -54,7 +55,7 @@ pub mod ricks {
         let ricks_token_cpi_ctx = CpiContext::new(
             ctx.accounts.token_program.clone(),
             token::MintTo {
-                mint: ctx.accounts.nft_ricks_fraction_tokens.to_account_info(),
+                mint: ctx.accounts.nft_ricks_fraction_token_mint.to_account_info(),
                 to: ctx.accounts.escrow_ricks_token_account.to_account_info(),
                 authority: ctx.accounts.authority.to_account_info(),
             },
@@ -199,8 +200,6 @@ pub mod ricks {
         Ok(())
     }
 
-    /// After an auction ends (determined by `bidding_end_time`), anyone can initiate end_auction
-    /// which will transfer the highest bid from the bid account to the beneficiary listed in the auction state account
     #[access_control(end_auction_time_valid(&ctx.accounts.auction_state, &ctx.accounts.clock))]
     pub fn end_auction(ctx: Context<EndAuction>) -> Result<()> {
         let nft_escrow_account = &mut ctx.accounts.nft_escrow_account;
@@ -246,7 +245,7 @@ pub mod ricks {
 
         let owner = Owner { 
             owner: beneficiary.key(),
-            nft_of_fraction: nft_escrow_account.nft_deposit.key(),
+            nft_of_fraction: nft_escrow_account.deposited_nft.key(),
             fractions_own: nft_escrow_account.nft_fraction_owners[index].fractions_own + ricks,
         };
 
@@ -299,11 +298,13 @@ pub struct InitializeNFTEscrow<'info> {
     #[account(mut)]
     pub nft_owner: Signer<'info>,
     #[account(mut)]
-    pub nft_deposit: Account<'info, TokenAccount>,
+    pub depositor: Account<'info, TokenAccount>,
+    #[account(mut)]
+    pub deposited_nft: Account<'info, TokenAccount>,
     #[account(mut)]
     pub escrow_ricks_token_account: Account<'info, TokenAccount>,
     #[account(mut)]
-    pub nft_ricks_fraction_tokens: Account<'info, TokenAccount>,
+    pub nft_ricks_fraction_token_mint: Account<'info, Mint>,
     pub token_program: AccountInfo<'info>,
     pub system_program: Program<'info, System>,
 }
@@ -447,8 +448,9 @@ pub struct NFTEscrow {
     pub nft_escrow: Pubkey,
     pub bump_seed: u8,
     pub nft_owner: Pubkey,
-    pub nft_deposit: Pubkey,
+    pub deposited_nft: Pubkey,
     pub nft_deposit_time: i64,
+    pub nft_fraction_token_mint: Pubkey,
     pub nft_fraction_token: Pubkey,
     pub nft_fraction_token_amount: u64,
     pub nft_fraction_owners: Vec<Owner>,
