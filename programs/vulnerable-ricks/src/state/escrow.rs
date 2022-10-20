@@ -14,14 +14,14 @@ pub struct Escrow {
     /// The nft token
     pub nft_token: Pubkey,
     /// Token mint account. The token this market is denominated in
-    pub token_mint: Pubkey,
-    /// ricks token account
+    pub ricks_token_mint: Pubkey,
+    /// Ricks token account
     pub ricks_token_account: Pubkey,
-    /// ricks amount of tokens in the escrow
+    /// Ricks amount of tokens in the escrow
     pub ricks_amount: u64,
-    /// ricks per day
+    /// Ricks amount of tokens to be issued per day
     pub ricks_per_day: u64,
-    /// Escrow start
+    /// Escrow start time
     pub start_time: u64,
     /// A flag checking whether the escrow is finalized
     pub finalized: bool,

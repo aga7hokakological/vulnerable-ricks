@@ -5,7 +5,7 @@ use solana_program::entrypoint::ProgramResult;
 use crate::state::{Escrow};
 
 #[derive(Clone, AnchorSerialize, AnchorDeserialize)]
-pub struct InitializeEscrow {
+pub struct InitializeEscrowParams {
     /// The nft token which is to be staked
     pub nft_token: Pubkey,
     /// The number of ricks
@@ -15,7 +15,7 @@ pub struct InitializeEscrow {
 }
 
 #[derive(Accounts)]
-#[instruction(params: InitializeEscrow)]
+#[instruction(params: InitializeEscrowParams)]
 pub struct InitializeEscrow<'info> {
     /// The market account to initialize
     #[account(init, payer = creator)]
@@ -53,4 +53,18 @@ impl InitializeEscrow<'_> {
 
         Ok(())
     }
-} 
+}
+
+pub fn handler(ctx: Context<InitializeEscrow>, params: InitializeEscrowParams) -> ProgramResult {
+    let InitializeEscrowParams {
+        nft_token,
+        ricks_amount,
+        resolver,
+    } = params;
+
+    ctx.accounts.validate_params(ricks_amount)?;
+
+    let escrow = &mut ctx.accounts.escrow;
+
+    
+}
